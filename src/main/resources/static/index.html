@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First App</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f4f6f8;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🚀 My First Full Stack App</h1>
+
+    <form action="/hello-user" method="post">
+        <input type="text" name="name" placeholder="Enter your name" />
+        <input type="number" name="age" placeholder="Enter age" />
+        <br/>
+        <button type="submit">Say Hello</button>
+    </form>
+</div>
+
+</body>
+</html>
