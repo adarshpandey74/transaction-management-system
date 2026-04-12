@@ -43,6 +43,51 @@ public class HelloController {
         return "User saved successfully 🎉";
     }
 
+    @GetMapping("/edit-user")
+    @ResponseBody
+    public String editUser(@RequestParam Long id) {
+
+        User user = userRepository.findById(id).orElse(null);
+
+        if (user == null) {
+            return "User not found";
+        }
+
+        return "<html><body>" +
+                "<h2>Edit User</h2>" +
+                "<form action='/update-user' method='post'>" +
+                "<input type='hidden' name='id' value='" + user.getId() + "' />" +
+                "<input type='text' name='name' value='" + user.getName() + "' /><br/>" +
+                "<input type='number' name='age' value='" + user.getAge() + "' /><br/>" +
+                "<button type='submit'>Update</button>" +
+                "</form>" +
+                "</body></html>";
+    }
+
+    @PostMapping("/update-user")
+    public String updateUser(@RequestParam Long id,
+                             @RequestParam String name,
+                             @RequestParam int age) {
+
+        User user = userRepository.findById(id).orElse(null);
+
+        if (user != null) {
+            user.setName(name);
+            user.setAge(age);
+            userRepository.save(user);
+        }
+
+        return "redirect:/users";
+    }
+
+    @GetMapping("/delete-user")
+    public String deleteUser(@RequestParam Long id) {
+
+        userRepository.deleteById(id);
+
+        return "redirect:/users";
+    }
+
     @PostMapping("/hello-user")
     public String saveUser(@RequestParam String name,
                            @RequestParam int age) {
@@ -64,13 +109,17 @@ public class HelloController {
         html.append("<html><body>");
         html.append("<h2>All Users</h2>");
         html.append("<table border='1' style='border-collapse: collapse;'>");
-        html.append("<tr><th>ID</th><th>Name</th><th>Age</th></tr>");
+        html.append("<tr><th>ID</th><th>Name</th><th>Age</th><th>Action</th></tr>");
 
         userRepository.findAll().forEach(user -> {
             html.append("<tr>")
                     .append("<td>").append(user.getId()).append("</td>")
                     .append("<td>").append(user.getName()).append("</td>")
                     .append("<td>").append(user.getAge()).append("</td>")
+                    .append("<td>")
+                    .append("<a href='/edit-user?id=").append(user.getId()).append("'>Edit</a> ")
+                    .append("<a href='/delete-user?id=").append(user.getId()).append("'>Delete</a>")
+                    .append("</td>")
                     .append("</tr>");
         });
 
