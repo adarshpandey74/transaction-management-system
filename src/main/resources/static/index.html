@@ -40,7 +40,7 @@
 <body>
 
 <div class="box">
-    <h1>🚀 My First Full Stack App</h1>
+    <h1>🚀 Bank of Gareeb People except one !!</h1>
 
     <form action="/hello-user" method="post">
         <input type="text" name="name" placeholder="Enter your name" />
@@ -50,6 +50,53 @@
     </form>
     <br><br>
     <a href="/users">📋 View All Users</a>
+    <br><br>
+    <a href="/accounts">💰 View All Accounts</a>
+
+    <a href="/transactions">📜 View Transactions</a>
+
+    <br><br>
+    <h3>Create Account</h3>
+    <form action="/create-account" method="post">
+        <input type="number" name="userId" placeholder="User ID" />
+        <input type="number" name="balance" placeholder="Initial Balance" />
+        <br/>
+        <button type="submit">Create Account</button>
+    </form>
+
+    <h3>Deposit Money</h3>
+    <form action="/deposit" method="post">
+        <input type="number" name="accountId" placeholder="Account ID" />
+        <input type="number" name="amount" placeholder="Amount" />
+        <br/>
+        <button type="submit">Deposit</button>
+    </form>
+
+    <h3>Withdraw Money</h3>
+    <form action="/withdraw" method="post">
+        <input type="number" name="accountId" placeholder="Account ID" />
+        <input type="number" name="amount" placeholder="Amount" />
+        <br/>
+        <button type="submit">Withdraw</button>
+    </form>
+
+    <h3>Transfer Money</h3>
+    <form action="/transfer" method="post">
+        <input type="number" name="fromAccountId" placeholder="From Account ID" />
+        <input type="number" name="toAccountId" placeholder="To Account ID" />
+        <input type="number" name="amount" placeholder="Amount" />
+        <br/>
+        <button type="submit">Transfer</button>
+    </form>
+
+    <h3>🔍 Check Account Transactions</h3>
+
+    <form action="/account-transactions" method="get">
+        <input type="number" name="accountId" placeholder="Enter Account ID" />
+        <br/>
+        <button type="submit">View History</button>
+    </form>
+
 </div>
 
 </body>
