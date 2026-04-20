@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Accounts</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+
+<div class="navbar">
+    <h2>💳 MyBank</h2>
+    <div>
+        <a href="/">Home</a>
+        <a href="/users">Users</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>💰 Accounts</h2>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Account No</th>
+            <th>Balance</th>
+            <th>User</th>
+        </tr>
+
+        <tr th:each="acc : ${accounts}">
+            <td th:text="${acc.id}"></td>
+            <td th:text="${acc.accountNumber}"></td>
+            <td th:text="${acc.balance}"></td>
+            <td th:text="${acc.user.name}"></td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

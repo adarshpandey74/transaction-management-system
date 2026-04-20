@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <a href="/logout">Logout</a>
+    <h2>💳 MyBank Dashboard</h2>
+    <div>
+        <a href="/">Dashboard</a>
+        <a href="/users">Users</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- STATS -->
+    <div class="grid">
+
+        <div class="card stat">
+            <h3>Total Balance</h3>
+            <h2>₹ <span th:text="${totalBalance}"></span></h2>
+        </div>
+
+        <div class="card stat">
+            <h3>Total Users</h3>
+            <h2 th:text="${totalUsers}"></h2>
+        </div>
+
+        <div class="card stat">
+            <h3>Total Accounts</h3>
+            <h2 th:text="${totalAccounts}"></h2>
+        </div>
+
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <h3>⚡ Quick Actions</h3>
+    <div class="grid">
+
+        <div class="card">
+            <h4>Create User</h4>
+            <form action="/hello-user" method="post">
+                <input type="text" name="name" placeholder="Name" required>
+                <input type="number" name="age" placeholder="Age" required>
+                <button>Create</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>Create Account</h4>
+            <form action="/create-account" method="post">
+                <input type="number" name="userId" placeholder="User ID" required>
+                <input type="number" name="balance" placeholder="Balance" required>
+                <button>Create</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>Deposit</h4>
+            <form action="/deposit" method="post">
+                <input type="number" name="accountId" placeholder="Account ID" required>
+                <input type="number" name="amount" placeholder="Amount" required>
+                <button>Deposit</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>Withdraw</h4>
+            <form action="/withdraw" method="post">
+                <input type="number" name="accountId" placeholder="Account ID" required>
+                <input type="number" name="amount" placeholder="Amount" required>
+                <button>Withdraw</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>Transfer</h4>
+            <form action="/transfer" method="post">
+                <input type="number" name="fromAccountId" placeholder="From ID" required>
+                <input type="number" name="toAccountId" placeholder="To ID" required>
+                <input type="number" name="amount" placeholder="Amount" required>
+                <button>Transfer</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- RECENT TRANSACTIONS -->
+    <h3>📜 Recent Transactions</h3>
+
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Account</th>
+            <th>Time</th>
+        </tr>
+
+        <tr th:each="t : ${recentTransactions}">
+            <td th:text="${t.type}"></td>
+            <td th:text="${t.amount}"></td>
+            <td th:text="${t.account.accountNumber}"></td>
+            <td th:text="${t.timestamp}"></td>
+        </tr>
+    </table>
+
+</div>
+
+</body>
+</html>

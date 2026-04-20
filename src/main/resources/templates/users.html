@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Users</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+
+<div class="navbar">
+    <h2>💳 MyBank</h2>
+    <div>
+        <a href="/">Home</a>
+        <a href="/users">Users</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>👤 Users</h2>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Actions</th>
+        </tr>
+
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.name}"></td>
+            <td th:text="${user.age}"></td>
+            <td>
+                <a th:href="@{'/edit-user?id=' + ${user.id}}">✏️ Edit</a>
+                <a th:href="@{'/delete-user?id=' + ${user.id}}">🗑 Delete</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

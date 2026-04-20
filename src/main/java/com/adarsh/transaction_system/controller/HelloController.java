@@ -1,11 +1,9 @@
 package com.adarsh.transaction_system.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
 
 import com.adarsh.transaction_system.entity.User;
 import com.adarsh.transaction_system.repository.UserRepository;
@@ -13,7 +11,6 @@ import com.adarsh.transaction_system.repository.AccountRepository;
 import com.adarsh.transaction_system.entity.Account;
 import com.adarsh.transaction_system.repository.TransactionRepository;
 import com.adarsh.transaction_system.entity.Transaction;
-
 
 @Controller
 public class HelloController {
@@ -27,52 +24,93 @@ public class HelloController {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    @GetMapping("/hello")
-    @ResponseBody
-    public String sayHello() {
-        return "Hello Banking System 🚀";
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
     }
 
-    @GetMapping("/hello-user")
-    @ResponseBody
-    public String hello(@RequestParam(required = false) String name) {
-        if (name == null) {
-            return "Please provide a name";
-        }
-        return "Hello " + name;
-    }
+    @PostMapping("/login")
+    public String login(@RequestParam String username,
+                        @RequestParam String password,
+                        HttpSession session,
+                        org.springframework.ui.Model model) {
 
-    @GetMapping("/about")
-    @ResponseBody
-    public String about() {
-        return "This is my first Spring Boot project";
-    }
-
-    @GetMapping("/success")
-    @ResponseBody
-    public String success() {
-        return "User saved successfully 🎉";
-    }
-
-    @GetMapping("/edit-user")
-    @ResponseBody
-    public String editUser(@RequestParam Long id) {
-
-        User user = userRepository.findById(id).orElse(null);
-
-        if (user == null) {
-            return "User not found";
+        // HARD CODED LOGIN (for now)
+        if (username.equals("admin") && password.equals("1234")) {
+            session.setAttribute("user", username);
+            return "redirect:/";
         }
 
-        return "<html><body>" +
-                "<h2>Edit User</h2>" +
-                "<form action='/update-user' method='post'>" +
-                "<input type='hidden' name='id' value='" + user.getId() + "' />" +
-                "<input type='text' name='name' value='" + user.getName() + "' /><br/>" +
-                "<input type='number' name='age' value='" + user.getAge() + "' /><br/>" +
-                "<button type='submit'>Update</button>" +
-                "</form>" +
-                "</body></html>";
+        model.addAttribute("error", "Invalid credentials ❌");
+        return "login";
+    }
+
+    // HOME
+    @GetMapping("/")
+    public String home(org.springframework.ui.Model model,
+                       HttpSession session) {
+
+        if (session.getAttribute("user") == null) {
+            return "redirect:/login";
+        }
+
+        double totalBalance = accountRepository.findAll()
+                .stream()
+                .mapToDouble(Account::getBalance)
+                .sum();
+
+        long totalUsers = userRepository.count();
+        long totalAccounts = accountRepository.count();
+
+        var recentTransactions = transactionRepository.findAll()
+                .stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .limit(5)
+                .toList();
+
+        model.addAttribute("totalBalance", totalBalance);
+        model.addAttribute("totalUsers", totalUsers);
+        model.addAttribute("totalAccounts", totalAccounts);
+        model.addAttribute("recentTransactions", recentTransactions);
+
+        return "index";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+
+    // ================= USER =================
+
+    @PostMapping("/hello-user")
+    public String saveUser(@RequestParam String name,
+                           @RequestParam int age,
+                           org.springframework.ui.Model model) {
+
+        User user = new User();
+        user.setName(name);
+        user.setAge(age);
+
+        userRepository.save(user);
+
+        model.addAttribute("message", "User saved successfully 🎉");
+        model.addAttribute("success", true);
+
+        return "index";
+    }
+
+    @GetMapping("/users")
+    public String getUsers(org.springframework.ui.Model model) {
+        model.addAttribute("users", userRepository.findAll());
+        return "users";
+    }
+
+    @GetMapping("/delete-user")
+    public String deleteUser(@RequestParam Long id) {
+        userRepository.deleteById(id);
+        return "redirect:/users";
     }
 
     @PostMapping("/update-user")
@@ -91,155 +129,103 @@ public class HelloController {
         return "redirect:/users";
     }
 
-    @GetMapping("/delete-user")
-    public String deleteUser(@RequestParam Long id) {
-
-        userRepository.deleteById(id);
-
-        return "redirect:/users";
-    }
-
-    @PostMapping("/hello-user")
-    public String saveUser(@RequestParam String name,
-                           @RequestParam int age) {
-
-        User user = new User();
-        user.setName(name);
-        user.setAge(age);
-
-        userRepository.save(user);
-
-        return "redirect:/success";
-    }
-    @GetMapping("/users")
-    @ResponseBody
-    public String getUsers() {
-
-        StringBuilder html = new StringBuilder();
-
-        html.append("<html><body>");
-        html.append("<h2>All Users</h2>");
-        html.append("<table border='1' style='border-collapse: collapse;'>");
-        html.append("<tr><th>ID</th><th>Name</th><th>Age</th><th>Action</th></tr>");
-
-        userRepository.findAll().forEach(user -> {
-            html.append("<tr>")
-                    .append("<td>").append(user.getId()).append("</td>")
-                    .append("<td>").append(user.getName()).append("</td>")
-                    .append("<td>").append(user.getAge()).append("</td>")
-                    .append("<td>")
-                    .append("<a href='/edit-user?id=").append(user.getId()).append("'>Edit</a> ")
-                    .append("<a href='/delete-user?id=").append(user.getId()).append("'>Delete</a>")
-                    .append("</td>")
-                    .append("</tr>");
-        });
-
-        html.append("</table>");
-        html.append("</body></html>");
-
-        return html.toString();
-    }
+    // ================= ACCOUNT =================
 
     @PostMapping("/create-account")
-    @ResponseBody
     public String createAccount(@RequestParam Long userId,
-                                @RequestParam double balance) {
+                                @RequestParam double balance,
+                                org.springframework.ui.Model model) {
+
+        if (balance < 0) {
+            model.addAttribute("message", "Balance cannot be negative ❌");
+            model.addAttribute("success", false);
+            return "index";
+        }
 
         User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
-            return "User not found";
+            model.addAttribute("message", "User not found ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
         Account account = new Account();
         account.setUser(user);
         account.setBalance(balance);
-        account.setAccountNumber("ACC" + userId);
+
+        // Better account number
+        account.setAccountNumber("ACC" + System.currentTimeMillis());
 
         accountRepository.save(account);
 
-        Transaction t = new Transaction();
-        t.setType("CREATE");
-        t.setAmount(balance);
-        t.setDescription("Account created");
-        t.setTimestamp(java.time.LocalDateTime.now());
-        t.setAccount(account);
+        model.addAttribute("message", "Account created successfully ✅");
+        model.addAttribute("success", true);
 
-        transactionRepository.save(t);
-
-        return "Account created for user " + user.getName();
+        return "index";
     }
 
     @GetMapping("/accounts")
-    @ResponseBody
-    public String getAccounts() {
-
-        StringBuilder html = new StringBuilder();
-
-        html.append("<html><body>");
-        html.append("<h2>All Accounts</h2>");
-        html.append("<table border='1' style='border-collapse: collapse;'>");
-        html.append("<tr><th>ID</th><th>Account No</th><th>Balance</th><th>User</th><th>Action</th></tr>");
-
-        accountRepository.findAll().forEach(acc -> {
-            html.append("<tr>")
-                    .append("<td>").append(acc.getId()).append("</td>")
-                    .append("<td>").append(acc.getAccountNumber()).append("</td>")
-                    .append("<td>").append(acc.getBalance()).append("</td>")
-                    .append("<td>").append(acc.getUser().getName()).append("</td>")
-                    .append("<td>")
-                    .append("<button onclick=\"location.href='/account-transactions?accountId=")
-                    .append(acc.getId())
-                    .append("'\">View</button>")
-                    .append("</td>")
-                    .append("</tr>");
-        });
-
-        html.append("</table>");
-        html.append("</body></html>");
-
-        return html.toString();
+    public String getAccounts(org.springframework.ui.Model model) {
+        model.addAttribute("accounts", accountRepository.findAll());
+        return "accounts";
     }
 
+    // ================= DEPOSIT =================
+
     @PostMapping("/deposit")
-    @ResponseBody
     public String deposit(@RequestParam Long accountId,
-                          @RequestParam double amount) {
+                          @RequestParam double amount,
+                          org.springframework.ui.Model model) {
+
+        if (amount <= 0) {
+            model.addAttribute("message", "Invalid amount ❌");
+            model.addAttribute("success", false);
+            return "index";
+        }
 
         Account account = accountRepository.findById(accountId).orElse(null);
 
         if (account == null) {
-            return "Account not found";
+            model.addAttribute("message", "Account not found ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
         account.setBalance(account.getBalance() + amount);
         accountRepository.save(account);
 
-        Transaction t = new Transaction();
-        t.setType("DEPOSIT");
-        t.setAmount(amount);
-        t.setDescription("Deposit to account");
-        t.setTimestamp(java.time.LocalDateTime.now());
-        t.setAccount(account);
+        model.addAttribute("message", "Deposit successful ✅");
+        model.addAttribute("success", true);
 
-        transactionRepository.save(t);
-
-        return "Deposited " + amount + ". New Balance: " + account.getBalance();
+        return "index";
     }
 
+    // ================= WITHDRAW =================
+
     @PostMapping("/withdraw")
-    @ResponseBody
     public String withdraw(@RequestParam Long accountId,
-                           @RequestParam double amount) {
+                           @RequestParam double amount,
+                           org.springframework.ui.Model model) {
+
+        if (amount <= 0) {
+            model.addAttribute("message", "Invalid amount ❌");
+            model.addAttribute("success", false);
+            return "index";
+        }
 
         Account account = accountRepository.findById(accountId).orElse(null);
 
         if (account == null) {
-            return "Account not found";
+            model.addAttribute("message", "Account not found ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
         if (account.getBalance() < amount) {
-            return "Insufficient balance ❌";
+            model.addAttribute("message", "Insufficient balance ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
         account.setBalance(account.getBalance() - amount);
@@ -248,41 +234,55 @@ public class HelloController {
         Transaction t = new Transaction();
         t.setType("WITHDRAW");
         t.setAmount(amount);
-        t.setDescription("Withdraw from account");
+        t.setDescription("Withdraw");
         t.setTimestamp(java.time.LocalDateTime.now());
         t.setAccount(account);
 
         transactionRepository.save(t);
 
-        return "Withdrawn " + amount + ". Remaining Balance: " + account.getBalance();
+        model.addAttribute("message", "Withdraw successful ✅");
+        model.addAttribute("success", true);
+
+        return "index";
     }
 
+    // ================= TRANSFER =================
+
     @PostMapping("/transfer")
-    @ResponseBody
     public String transfer(@RequestParam Long fromAccountId,
                            @RequestParam Long toAccountId,
-                           @RequestParam double amount) {
+                           @RequestParam double amount,
+                           org.springframework.ui.Model model) {
+
+        if (amount <= 0) {
+            model.addAttribute("message", "Invalid amount ❌");
+            model.addAttribute("success", false);
+            return "index";
+        }
 
         Account from = accountRepository.findById(fromAccountId).orElse(null);
         Account to = accountRepository.findById(toAccountId).orElse(null);
 
         if (from == null || to == null) {
-            return "One of the accounts not found";
+            model.addAttribute("message", "Account not found ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
         if (from.getBalance() < amount) {
-            return "Insufficient balance ❌";
+            model.addAttribute("message", "Insufficient balance ❌");
+            model.addAttribute("success", false);
+            return "index";
         }
 
-        // deduct from sender
+        // Transfer
         from.setBalance(from.getBalance() - amount);
-
-        // add to receiver
         to.setBalance(to.getBalance() + amount);
 
         accountRepository.save(from);
         accountRepository.save(to);
 
+        // OUT transaction
         Transaction t1 = new Transaction();
         t1.setType("TRANSFER_OUT");
         t1.setAmount(amount);
@@ -292,6 +292,7 @@ public class HelloController {
 
         transactionRepository.save(t1);
 
+        // IN transaction
         Transaction t2 = new Transaction();
         t2.setType("TRANSFER_IN");
         t2.setAmount(amount);
@@ -301,62 +302,38 @@ public class HelloController {
 
         transactionRepository.save(t2);
 
-        return "Transferred " + amount + " from Account " + fromAccountId +
-                " to Account " + toAccountId;
+        model.addAttribute("message", "Transfer successful ✅");
+        model.addAttribute("success", true);
+
+        return "index";
     }
 
+    // ================= TRANSACTIONS =================
+
     @GetMapping("/transactions")
-    @ResponseBody
-    public String getTransactions() {
-
-        StringBuilder html = new StringBuilder();
-
-        html.append("<html><body>");
-        html.append("<h2>All Transactions</h2>");
-        html.append("<table border='1' style='border-collapse: collapse;'>");
-        html.append("<tr><th>ID</th><th>Type</th><th>Amount</th><th>Account</th><th>Time</th></tr>");
-
-        transactionRepository.findAll().forEach(t -> {
-            html.append("<tr>")
-                    .append("<td>").append(t.getId()).append("</td>")
-                    .append("<td>").append(t.getType()).append("</td>")
-                    .append("<td>").append(t.getAmount()).append("</td>")
-                    .append("<td>").append(t.getAccount().getAccountNumber()).append("</td>")
-                    .append("<td>").append(t.getTimestamp()).append("</td>")
-                    .append("</tr>");
-        });
-
-        html.append("</table>");
-        html.append("</body></html>");
-
-        return html.toString();
+    public String getTransactions(org.springframework.ui.Model model) {
+        model.addAttribute("transactions", transactionRepository.findAll());
+        return "transactions";
     }
 
     @GetMapping("/account-transactions")
-    @ResponseBody
-    public String getAccountTransactions(@RequestParam Long accountId) {
+    public String getAccountTransactions(@RequestParam Long accountId,
+                                         org.springframework.ui.Model model) {
 
-        StringBuilder html = new StringBuilder();
+        Account account = accountRepository.findById(accountId).orElse(null);
 
-        html.append("<html><body>");
-        html.append("<h2>Transactions for Account ID: " + accountId + "</h2>");
-        html.append("<table border='1'>");
-        html.append("<tr><th>ID</th><th>Type</th><th>Amount</th><th>Time</th></tr>");
+        if (account == null) {
+            model.addAttribute("message", "Account not found ❌");
+            model.addAttribute("success", false);
+            return "index";
+        }
 
-        transactionRepository.findAll().forEach(t -> {
-            if (t.getAccount().getId().equals(accountId)) {
-                html.append("<tr>")
-                        .append("<td>").append(t.getId()).append("</td>")
-                        .append("<td>").append(t.getType()).append("</td>")
-                        .append("<td>").append(t.getAmount()).append("</td>")
-                        .append("<td>").append(t.getTimestamp()).append("</td>")
-                        .append("</tr>");
-            }
-        });
+        model.addAttribute("transactions",
+                transactionRepository.findAll()
+                        .stream()
+                        .filter(t -> t.getAccount().getId().equals(accountId))
+                        .toList());
 
-        html.append("</table>");
-        html.append("</body></html>");
-
-        return html.toString();
+        return "transactions";
     }
 }
